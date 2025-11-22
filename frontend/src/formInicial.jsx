@@ -25,15 +25,29 @@ function FormInicial({ ClientCall, estado, setNuevaEmpresa }) {
           {/* 1. Input para el nombre */}
           <input 
             type="text" 
-            placeholder="¿Cuál sería el nombre de tu empresa?"
+            placeholder="Ej: AutoMall Premium, Concesionario El Roble..."
+            value={nombre}
             style={{
-              padding: "12px 20px",
-              fontSize: "16px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
+              padding: "16px 24px",
+              fontSize: "18px",
+              borderRadius: "10px",
+              border: "2px solid rgba(255, 255, 255, 0.3)",
               width: "100%",
-              maxWidth: "400px", // Que no se haga demasiado ancho en pantallas grandes
-              textAlign: "center"
+              maxWidth: "500px",
+              textAlign: "center",
+              background: "rgba(255, 255, 255, 0.95)",
+              color: "#1e3c72",
+              fontWeight: "500",
+              transition: "all 0.3s ease",
+              boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)"
+            }}
+            onFocus={(e) => {
+              e.target.style.border = "2px solid #e63946";
+              e.target.style.boxShadow = "0 4px 20px rgba(230, 57, 70, 0.3)";
+            }}
+            onBlur={(e) => {
+              e.target.style.border = "2px solid rgba(255, 255, 255, 0.3)";
+              e.target.style.boxShadow = "0 4px 15px rgba(0, 0, 0, 0.1)";
             }}
             onChange={(e) => cambiarNombre(e.target.value)} 
           />
@@ -41,23 +55,30 @@ function FormInicial({ ClientCall, estado, setNuevaEmpresa }) {
           {/* 2. Botón principal */}
           <button 
             className='purple-button' 
-            // onClick={CrearEmpresa} <-- Asegúrate de llamar a tu función aquí, no en onSubmit del form por ahora
-            type="button" // Importante: evita que el form recargue la página al hacer clic
-            disabled={estado}
-            style={{ width: "100%", maxWidth: "300px" }}
+            type="button"
+            disabled={estado || !nombre.trim()}
+            style={{ width: "100%", maxWidth: "350px", marginTop: "10px" }}
             onClick={() => enviar()}
           >
-            Crear Empresa
+            🚗 Registrar Concesionario
           </button>
 
-          {/* 3. Texto y enlace para los que ya tienen empresa */}
-          <p style={{ fontSize: "14px", color: "#ccc", marginTop: "10px" }}>
-            ¿Ya tienes una empresa creada?{' '}
+          {/* 3. Texto y enlace para los que ya tienen concesionario */}
+          <p style={{ fontSize: "16px", color: "rgba(255, 255, 255, 0.9)", marginTop: "20px", fontWeight: "500" }}>
+            ¿Ya tienes un concesionario registrado?{' '}
             <span 
-              style={{ color: "#8e44ad", cursor: "pointer", textDecoration: "underline", fontWeight: "bold" }}
+              style={{ 
+                color: "#f1c40f", 
+                cursor: "pointer", 
+                textDecoration: "underline", 
+                fontWeight: "bold",
+                transition: "color 0.3s ease"
+              }}
+              onMouseEnter={(e) => e.target.style.color = "#f39c12"}
+              onMouseLeave={(e) => e.target.style.color = "#f1c40f"}
               onClick={() => setNuevaEmpresa(true)}
             >
-              Da clic aquí
+              Acceder al panel
             </span>
           </p>
 

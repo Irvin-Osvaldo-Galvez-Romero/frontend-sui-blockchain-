@@ -1,13 +1,13 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background: linear-gradient(110deg, #1c90ad9f, hsla(265, 79%, 33%, 0.678));
+  color: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,22 +22,31 @@
 .app-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* Fuerza a TODOS los hijos directos a pegarse arriba */
-  padding: 10px 25px;
+  align-items: center;
+  padding: 15px 30px;
   position: absolute;
-  top: 10px;
+  top: 0;
   left: 0;
   width: 100%;
   box-sizing: border-box;
+  background: rgba(30, 60, 114, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
 /* Estilo específico para el logo cuando es hijo directo */
 img.logo {
-  display: block; /* Importante: evita comportamientos extraños de alineación en imágenes */
-  height: 50px;
+  display: block;
+  height: 55px;
   width: auto;
-  margin-top: -31px; /* Fuerza margen superior cero */
-  margin-left: -30px; /* Fuerza margen superior cero */
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+img.logo:hover {
+  transform: scale(1.05);
 }
 
 h1 {
@@ -82,25 +91,53 @@ button:focus-visible {
 
 }
 
+/* Botón principal estilo automotriz */
 .purple-button {
-  background-color: #1c90ad9f; /* Color morado base */
-  color: white; /* Texto blanco para buen contraste */
+  background: linear-gradient(135deg, #e63946 0%, #d62839 100%);
+  color: white;
   border: none;
-  padding: 12px 24px; /* Un poco más grande y cómodo */
+  padding: 14px 28px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
-  font-weight: 600; /* Texto un poco más grueso */
-  border-radius: 8px; /* Bordes redondeados */
+  font-weight: 700;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease; /* Transiciones suaves */
-  box-shadow: 0 4px 6px rgb(85, 128, 141); /* Sombra sutil para dar profundidad */
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(230, 57, 70, 0.4);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-/* Estado Hover: cuando el mouse está encima */
-.purple-button:hover {
-  background-color: hsla(265, 80%, 52%, 0.678); /* Un tono morado un poco más claro */
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15); /* Sombra un poco más pronunciada */
-  transform: translateY(-2px); /* Se mueve ligeramente hacia arriba */
+.purple-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d62839 0%, #c1121f 100%);
+  box-shadow: 0 6px 20px rgba(230, 57, 70, 0.6);
+  transform: translateY(-2px);
+}
+
+.purple-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Botón secundario para operaciones de consulta */
+.secondary-button {
+  background: linear-gradient(135deg, #457b9d 0%, #1d3557 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(29, 53, 87, 0.3);
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d3557 0%, #457b9d 100%);
+  box-shadow: 0 6px 16px rgba(29, 53, 87, 0.5);
+  transform: translateY(-2px);
 }

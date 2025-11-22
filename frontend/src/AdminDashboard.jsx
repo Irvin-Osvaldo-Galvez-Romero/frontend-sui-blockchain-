@@ -1,69 +1,137 @@
 import { useState } from 'react';
 import { FUNCTIONS } from './functionsConfig'; // Tu archivo de configuración
 
-export function AdminDashboard({ ClientCall, estado, objectId, setObjectId, respuesta }) {
+export function AdminDashboard({ ClientCall, estado, objectId, setObjectId, respuesta, esAdmin }) {
     // Estado compartido para el ID de la empresa con la que vamos a trabajar
 
     return (
-        <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto", marginTop: "50px" }}>
+        <div style={{ 
+            padding: "30px 20px", 
+            maxWidth: "1400px", 
+            margin: "0 auto", 
+            marginTop: "80px"
+        }}>
             
-            {/* 1. HEADER: Input Global para el ID de Empresa */}
+            {/* Badge de Administrador/Owner */}
+            {esAdmin && (
+                <div style={{
+                    maxWidth: "600px",
+                    margin: "0 auto 30px auto",
+                    padding: "12px 20px",
+                    background: "linear-gradient(135deg, #f1c40f 0%, #f39c12 100%)",
+                    borderRadius: "10px",
+                    textAlign: "center",
+                    color: "#1e3c72",
+                    fontWeight: "700",
+                    fontSize: "16px",
+                    boxShadow: "0 4px 15px rgba(241, 196, 15, 0.4)"
+                }}>
+                    👑 {objectId ? "Propietario del Concesionario" : "Administrador"}
+                </div>
+            )}
+
+            {/* 1. HEADER: Input Global para el ID del Concesionario */}
             <div style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "15px",
-                marginBottom: "40px",
-                padding: "20px",
-                background: "#f9f9f9",
-                borderRadius: "12px"
+                gap: "20px",
+                marginBottom: "50px",
+                padding: "30px",
+                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 250, 0.95) 100%)",
+                borderRadius: "16px",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.5)"
             }}>
-                <h2 style={{ color: "#333", margin: "0" }}>Panel de Administración</h2>
+                <div style={{ textAlign: "center" }}>
+                    <h2 style={{ 
+                        color: "#1e3c72", 
+                        margin: "0 0 10px 0",
+                        fontSize: "28px",
+                        fontWeight: "700"
+                    }}>
+                        🏢 Panel de Administración
+                    </h2>
+                    <p style={{
+                        color: "#666",
+                        fontSize: "14px",
+                        margin: "0"
+                    }}>
+                        Gestión de clientes y servicios del concesionario
+                    </p>
+                </div>
                 <input 
                     type="text" 
-                    placeholder="Pega aquí el ID de la Empresa a gestionar (0x...)"
+                    placeholder="Pega aquí el ID del Concesionario (0x...)"
                     value={objectId}
                     onChange={(e) => setObjectId(e.target.value)}
                     style={{
-                        padding: "12px 20px",
+                        padding: "14px 24px",
                         fontSize: "16px",
-                        borderRadius: "8px",
-                        border: "1px solid #ccc",
+                        borderRadius: "10px",
+                        border: "2px solid #e0e0e0",
                         width: "100%",
-                        maxWidth: "500px",
+                        maxWidth: "600px",
                         textAlign: "center",
-                        fontFamily: "monospace"
+                        fontFamily: "monospace",
+                        background: "white",
+                        color: "#1e3c72",
+                        fontWeight: "500",
+                        transition: "all 0.3s ease",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)"
+                    }}
+                    onFocus={(e) => {
+                        e.target.style.border = "2px solid #457b9d";
+                        e.target.style.boxShadow = "0 4px 12px rgba(69, 123, 157, 0.2)";
+                    }}
+                    onBlur={(e) => {
+                        e.target.style.border = "2px solid #e0e0e0";
+                        e.target.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.05)";
                     }}
                 />
             </div>
             
             {respuesta !== null && (
                 <div style={{
-                    padding: "15px",
-                    background: "#ffffffff",
-                    borderRadius: "10px",
-                    marginBottom: "25px",
-                    textAlign: "center",
-                    border: "1px solid #d6b8ff"
+                    padding: "20px",
+                    background: "linear-gradient(135deg, rgba(69, 123, 157, 0.1) 0%, rgba(29, 53, 87, 0.1) 100%)",
+                    borderRadius: "12px",
+                    marginBottom: "30px",
+                    border: "2px solid #457b9d",
+                    boxShadow: "0 4px 15px rgba(69, 123, 157, 0.2)"
                 }}>
-                    <strong style={{color:'black'}}>Respuesta:</strong>
-                    <pre style={{
-                    whiteSpace: "pre-wrap",
-                    marginTop: "10px",
-                    color: "#4a148c",
-                    fontFamily: "monospace"
+                    <strong style={{
+                        color: '#1e3c72',
+                        fontSize: "16px",
+                        display: "block",
+                        marginBottom: "12px"
                     }}>
-                    {JSON.stringify(respuesta, null, 2)}
+                        ✅ Resultado de la operación:
+                    </strong>
+                    <pre style={{
+                        whiteSpace: "pre-wrap",
+                        marginTop: "10px",
+                        color: "#1e3c72",
+                        fontFamily: "monospace",
+                        fontSize: "14px",
+                        background: "rgba(255, 255, 255, 0.7)",
+                        padding: "15px",
+                        borderRadius: "8px",
+                        overflow: "auto",
+                        maxHeight: "300px",
+                        lineHeight: "1.6"
+                    }}>
+                        {typeof respuesta === 'string' ? respuesta : JSON.stringify(respuesta, null, 2)}
                     </pre>
                 </div>
-                )}
+            )}
 
 
             {/* 2. GRID DE FUNCIONES: Renderizamos una tarjeta por cada función en la config */}
             <div style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
-                gap: "25px"
+                gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))",
+                gap: "30px"
             }}>
                 {FUNCTIONS.map((config, index) => (
                     <FunctionCard 
@@ -85,10 +153,10 @@ function FunctionCard({ config, ClientCall, estado, objectId }) {
     const [valores, setValores] = useState({});
 
     // Función enviar adaptada de tu FormInicial
-    function enviar(e) {
+        function enviar(e) {
         e.preventDefault();
         if (!objectId) {
-            alert("Primero debes ingresar el ID de la empresa arriba.");
+            alert("⚠️ Primero debes ingresar el ID del concesionario en el campo superior.");
             return;
         }
                 // 1. Preparamos los argumentos en orden, convirtiendo tipos si es necesario.
@@ -117,14 +185,43 @@ function FunctionCard({ config, ClientCall, estado, objectId }) {
 
     return (
         <div style={{
-            border: "1px solid #eee",
-            borderRadius: "12px",
-            padding: "25px",
-            background: "#fff",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
-        }}>
-            <h3 style={{ color: "#8e44ad", marginTop: 0 }}>{config.titulo}</h3>
-            <p style={{ fontSize: "14px", color: "#666", lineHeight: "1.5", marginBottom: "20px" }}>
+            border: "2px solid #e0e0e0",
+            borderRadius: "14px",
+            padding: "28px",
+            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 251, 252, 0.98) 100%)",
+            boxShadow: "0 6px 20px rgba(0, 0, 0, 0.08)",
+            transition: "all 0.3s ease",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column"
+        }}
+        onMouseEnter={(e) => {
+            e.currentTarget.style.boxShadow = "0 8px 25px rgba(230, 57, 70, 0.15)";
+            e.currentTarget.style.border = "2px solid #e63946";
+            e.currentTarget.style.transform = "translateY(-4px)";
+        }}
+        onMouseLeave={(e) => {
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(0, 0, 0, 0.08)";
+            e.currentTarget.style.border = "2px solid #e0e0e0";
+            e.currentTarget.style.transform = "translateY(0)";
+        }}
+        >
+            <h3 style={{ 
+                color: "#1e3c72", 
+                marginTop: 0,
+                fontSize: "20px",
+                fontWeight: "700",
+                marginBottom: "12px"
+            }}>
+                {config.titulo}
+            </h3>
+            <p style={{ 
+                fontSize: "14px", 
+                color: "#666", 
+                lineHeight: "1.6", 
+                marginBottom: "24px",
+                flexGrow: 1
+            }}>
                 {config.descripcion}
             </p>
 
@@ -134,34 +231,61 @@ function FunctionCard({ config, ClientCall, estado, objectId }) {
                 gap: "15px"
             }}>
                 {config.inputs.map((input, idx) => (
-                    <div key={idx}>
-                        <label style={{ display: "block", fontSize: "14px", fontWeight: "bold", marginBottom: "5px", color: "#444" }}>
+                    <div key={idx} style={{ marginBottom: "16px" }}>
+                        <label style={{ 
+                            display: "block", 
+                            fontSize: "13px", 
+                            fontWeight: "600", 
+                            marginBottom: "8px", 
+                            color: "#1e3c72",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.5px"
+                        }}>
                             {input.label}
                         </label>
                         <input 
-                            type={input.type.includes('u') ? "number" : "text"} // Detecta si es número (u8, u16...) o texto
-                            placeholder={`Ingresa ${input.label}`}
+                            type={input.type.includes('u') ? "number" : "text"}
+                            placeholder={`Ejemplo: ${input.label.toLowerCase()}`}
+                            value={valores[input.name] || ""}
                             onChange={(e) => handleChange(input.name, e.target.value)}
                             style={{
-                                padding: "10px 15px",
+                                padding: "12px 16px",
                                 fontSize: "15px",
                                 borderRadius: "8px",
-                                border: "1px solid #ccc",
+                                border: "2px solid #e0e0e0",
                                 width: "100%",
-                                boxSizing: "border-box" // Evita que el padding rompa el ancho
+                                boxSizing: "border-box",
+                                background: "white",
+                                color: "#1e3c72",
+                                transition: "all 0.3s ease",
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.03)"
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.border = "2px solid #457b9d";
+                                e.target.style.boxShadow = "0 4px 12px rgba(69, 123, 157, 0.15)";
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.border = "2px solid #e0e0e0";
+                                e.target.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.03)";
                             }}
                         />
                     </div>
                 ))}
 
                 <button 
-                    className='purple-button'
+                    className={config.soloLectura === "1" ? 'secondary-button' : 'purple-button'}
                     type="button"
                     disabled={estado}
                     onClick={(e) => enviar(e)}
-                    style={{ width: "100%", marginTop: "10px" }}
+                    style={{ 
+                        width: "100%", 
+                        marginTop: "auto",
+                        padding: "14px",
+                        fontSize: "15px",
+                        fontWeight: "700"
+                    }}
                 >
-                   Ejecutar {config.nombreFuncion}
+                    {estado ? "⏳ Procesando..." : `▶️ ${config.soloLectura === "1" ? "Consultar" : "Ejecutar"}`}
                 </button>
             </form>
         </div>

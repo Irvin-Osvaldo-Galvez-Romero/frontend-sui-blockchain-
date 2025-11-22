@@ -17,17 +17,17 @@
 
 /* Estilos clave para el video de fondo */
 .back-video {
-    position: fixed; /* Se queda fijo al hacer scroll. Usa 'absolute' si prefieres que se mueva */
+    position: fixed;
     right: 0;
     bottom: 0;
     min-width: 100%;
     min-height: 100%;
     width: auto;
     height: auto;
-    z-index: -1; /* Envía el video detrás de todo */
-    object-fit: cover; /* Asegura que cubra toda el área sin perder proporción */
-    /* Opcional: un filtro para oscurecerlo y que el texto se lea mejor */
-    filter: brightness(50%); 
+    z-index: -1;
+    object-fit: cover;
+    /* Filtro mejorado para tema automotriz */
+    filter: brightness(40%) contrast(110%) saturate(120%);
 }
 
 .logo {

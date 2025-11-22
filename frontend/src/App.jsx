@@ -3,8 +3,9 @@ import { Transaction } from "@mysten/sui/transactions";
 import { isValidSuiObjectId } from "@mysten/sui/utils";
 import { useNetworkVariable } from "./networkConfig";
 import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import video from './video.mp4'
+import { esAdministrador, esOwnerDelConcesionario } from './adminConfig';
 
 import './App.css'
 import FormInicial from "./formInicial";
@@ -17,12 +18,41 @@ function App() {
   const [estado, cambiarEstado] = useState(false);
   const [respuesta, cambiarRespuesta] = useState(null);
   const [nuevaEmpresa, setNuevaEmpresa] = useState(false)
+  const [esAdmin, setEsAdmin] = useState(false)
+  const [esOwner, setEsOwner] = useState(false)
   const [objectId, setObjectId] = useState(() => {
     const hash = window.location.hash.slice(1);
     return isValidSuiObjectId(hash) ? hash : null;
   });
   const packageId = useNetworkVariable("PackageId");
   const modulo = "empresa"
+
+  // Verificar problemas de red (se usa en el manejo de errores más abajo)
+
+  // Verificar si el usuario es administrador o owner del concesionario
+  useEffect(() => {
+    async function verificarPermisos() {
+      if (!cuenta?.address) {
+        setEsAdmin(false);
+        setEsOwner(false);
+        return;
+      }
+
+      // Verificar si es administrador configurado
+      const admin = esAdministrador(cuenta.address);
+      setEsAdmin(admin);
+
+      // Verificar si es owner del concesionario actual
+      if (objectId) {
+        const owner = await esOwnerDelConcesionario(objectId, cuenta.address, suiClient);
+        setEsOwner(owner);
+      } else {
+        setEsOwner(false);
+      }
+    }
+
+    verificarPermisos();
+  }, [cuenta, objectId, suiClient]);
 
     async function ClientCall(params) {
     
@@ -149,7 +179,32 @@ function App() {
             }
           },
           onError: (err) => {
-            alert("Error al enviar transacción: " + err.message);
+            // Mostrar mensaje más detallado para errores comunes
+            let mensajeError = err.message;
+            
+            if (err.message.includes("No valid gas coins") || err.message.includes("gas")) {
+              mensajeError = "⚠️ No tienes tokens SUI en testnet para pagar el gas.\n\n" +
+                           "Solución:\n" +
+                           "1. Ve a https://faucet.sui.io/\n" +
+                           "2. Conecta tu wallet (asegúrate de estar en TESTNET)\n" +
+                           "3. Haz clic en 'Request Testnet SUI'\n" +
+                           "4. Reconecta tu wallet y vuelve a intentar";
+            } else if (err.message.includes("mainnet") || err.message.includes("network")) {
+              mensajeError = "⚠️ Problema de red detectado.\n\n" +
+                           "La aplicación está en TESTNET pero tu wallet puede estar en MAINNET.\n\n" +
+                           "Solución:\n" +
+                           "1. Cambia tu wallet a TESTNET\n" +
+                           "2. Obtén tokens en https://faucet.sui.io/\n" +
+                           "3. Reconecta tu wallet";
+            }
+            
+            alert(mensajeError);
+            
+            // Mostrar mensaje de ayuda visualmente
+            const mensajeRed = document.getElementById("mensaje-red");
+            if (mensajeRed && (err.message.includes("gas") || err.message.includes("network"))) {
+              mensajeRed.style.display = "block";
+            }
           },
         }
       );
@@ -334,22 +389,127 @@ function App() {
         </a>
         <ConnectButton />
       </div>
-        {!nuevaEmpresa && <h1 style={{marginTop:"200px", fontSize:"80px"}}> Crea tu Empresa con WayLearn </h1>}
+        {!nuevaEmpresa && (
+          <div style={{
+            marginTop: "200px",
+            textAlign: "center",
+            padding: "0 20px"
+          }}>
+            <h1 style={{
+              fontSize: "clamp(40px, 8vw, 80px)",
+              fontWeight: "800",
+              margin: "0 0 20px 0",
+              textShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+              background: "linear-gradient(135deg, #ffffff 0%, #f1c40f 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text"
+            }}>
+              🚗 Sistema de Gestión de Concesionario
+            </h1>
+            <p style={{
+              fontSize: "clamp(16px, 2vw, 24px)",
+              color: "rgba(255, 255, 255, 0.9)",
+              marginTop: "20px",
+              fontWeight: "300"
+            }}>
+              Gestiona tus clientes, servicios y descuentos en la blockchain
+            </p>
+          </div>
+        )}
         {!cuenta ?  
-        <h3 style={{marginTop:"50px", fontSize:"20px"}}> Antes de continuar conecta tu wallet </h3> : ( nuevaEmpresa ?
-        <AdminDashboard 
-          ClientCall={ClientCall}
-          estado={estado}
-          objectId={objectId}
-          setObjectId={setObjectId}
-          respuesta={respuesta}
-          /> :
-        <FormInicial 
-          ClientCall={ClientCall}
-          estado={estado}
-          setNuevaEmpresa={setNuevaEmpresa}
-        />
-      
+        <h3 style={{
+          marginTop: "50px", 
+          fontSize: "clamp(18px, 2vw, 24px)",
+          color: "rgba(255, 255, 255, 0.95)",
+          fontWeight: "500",
+          textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)"
+        }}> 
+          🔐 Conecta tu wallet para continuar 
+        </h3> : (
+        <>
+          {/* Mensaje de ayuda para problemas de red */}
+          <div style={{
+            maxWidth: "800px",
+            margin: "20px auto",
+            padding: "20px",
+            background: "rgba(230, 57, 70, 0.95)",
+            borderRadius: "12px",
+            border: "2px solid rgba(255, 255, 255, 0.3)",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+            display: "none" // Lo ocultamos por defecto, se mostrará si hay error
+          }} id="mensaje-red">
+            <h3 style={{ color: "white", margin: "0 0 15px 0", fontSize: "20px" }}>
+              ⚠️ Problema de Red Detectado
+            </h3>
+            <div style={{ color: "white", fontSize: "16px", lineHeight: "1.6" }}>
+              <p style={{ margin: "0 0 10px 0" }}>
+                <strong>La aplicación está configurada para TESTNET.</strong>
+              </p>
+              <p style={{ margin: "0 0 15px 0" }}>
+                Si ves un error al crear el concesionario:
+              </p>
+              <ol style={{ margin: "0 0 15px 0", paddingLeft: "20px" }}>
+                <li>Asegúrate de que tu wallet esté en <strong>TESTNET</strong></li>
+                <li>Obtén tokens de testnet en: <a href="https://faucet.sui.io/" target="_blank" rel="noopener noreferrer" style={{ color: "#f1c40f", textDecoration: "underline" }}>faucet.sui.io</a></li>
+                <li>Reconecta tu wallet después de cambiar la red</li>
+              </ol>
+              <p style={{ margin: "0", fontSize: "14px", opacity: "0.9" }}>
+                💡 <a href="./SOLUCION_ERROR_RED.md" target="_blank" style={{ color: "#f1c40f", textDecoration: "underline" }}>Ver guía completa de solución</a>
+              </p>
+            </div>
+          </div>
+          {nuevaEmpresa ? (
+            (esAdmin || esOwner || !objectId) ? (
+              <AdminDashboard 
+                ClientCall={ClientCall}
+                estado={estado}
+                objectId={objectId}
+                setObjectId={setObjectId}
+                respuesta={respuesta}
+                esAdmin={esAdmin || esOwner}
+              />
+            ) : (
+              <div style={{
+                maxWidth: "600px",
+                margin: "100px auto",
+                padding: "40px",
+                background: "rgba(230, 57, 70, 0.95)",
+                borderRadius: "16px",
+                textAlign: "center",
+                color: "white"
+              }}>
+                <h2 style={{ margin: "0 0 20px 0", fontSize: "24px" }}>
+                  🔒 Acceso Restringido
+                </h2>
+                <p style={{ fontSize: "18px", lineHeight: "1.6", margin: "0 0 20px 0" }}>
+                  Solo el administrador o el propietario del concesionario puede gestionar este panel.
+                </p>
+                <p style={{ fontSize: "14px", opacity: "0.9" }}>
+                  Tu dirección: <code style={{
+                    background: "rgba(0,0,0,0.3)",
+                    padding: "4px 8px",
+                    borderRadius: "4px",
+                    fontSize: "12px"
+                  }}>{cuenta?.address?.slice(0, 10)}...{cuenta?.address?.slice(-8)}</code>
+                </p>
+                <button
+                  className="purple-button"
+                  onClick={() => setNuevaEmpresa(false)}
+                  style={{ marginTop: "20px" }}
+                >
+                  Volver al Inicio
+                </button>
+              </div>
+            )
+          ) : (
+            <FormInicial 
+              ClientCall={ClientCall}
+              estado={estado}
+              setNuevaEmpresa={setNuevaEmpresa}
+            />
+          )}
+        </>
         )}
         
       <div>
