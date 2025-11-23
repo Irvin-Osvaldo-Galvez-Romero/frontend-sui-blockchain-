@@ -4,7 +4,7 @@ import { isValidSuiObjectId } from "@mysten/sui/utils";
 import { useNetworkVariable } from "./networkConfig";
 import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import { useState, useEffect } from 'react';
-import video from './video.mp4'
+import video from './Gradient-background.mp4'
 import { esAdministrador, esOwnerDelConcesionario } from './adminConfig';
 
 import './App.css'
@@ -67,16 +67,22 @@ function App() {
       // 1) SERIALIZACIÓN DE ARGUMENTOS
       // ===============================
       const args = params.args.map((arg, idx) => {
-        console.log("ARG RAW", idx, arg);
+        console.log("ARG RAW", idx, arg, typeof arg);
+
+        // Validar que el argumento no sea null o undefined
+        if (arg === null || arg === undefined) {
+          throw new Error(`Argumento ${idx} es null o undefined`);
+        }
 
         // 1. ObjectID válido → tx.object(...)
+        // IMPORTANTE: Verificar ObjectID PRIMERO antes de otros strings
         if (typeof arg === "string" && isValidSuiObjectId(arg)) {
           console.log(`Arg[${idx}] es ObjectID → tx.object(${arg})`);
           return tx.object(arg);
         }
 
         // 2. Tipos explícitos { type, value }
-        if (arg && typeof arg === "object" && "type" in arg) {
+        if (arg && typeof arg === "object" && !Array.isArray(arg) && "type" in arg) {
           const { type, value } = arg;
 
           switch (type) {
@@ -94,15 +100,23 @@ function App() {
           }
         }
 
-        // 3. Inferencias básicas
+        // 3. Inferencias básicas (en orden específico)
         if (typeof arg === "boolean") return tx.pure.bool(arg);
         if (typeof arg === "number") return tx.pure.u64(BigInt(arg));
         if (typeof arg === "bigint") return tx.pure.u64(arg);
-        if (typeof arg === "string") return tx.pure.string(arg);
+        
+        // 4. Strings - IMPORTANTE: después de verificar ObjectID
+        if (typeof arg === "string") {
+          // Validar que el string no esté vacío para funciones críticas
+          if (arg.trim() === "" && params.funcion === "crear_empresa") {
+            throw new Error("El nombre del concesionario no puede estar vacío");
+          }
+          return tx.pure.string(String(arg));
+        }
 
-        // 4. Fallback
-        console.warn(`Arg[${idx}] fallback → tx.pure(arg)`);
-        return tx.pure(arg);
+        // 5. Fallback - lanzar error en lugar de usar tx.pure genérico
+        console.error(`Arg[${idx}] tipo no soportado:`, typeof arg, arg);
+        throw new Error(`Tipo de argumento no soportado en posición ${idx}: ${typeof arg}`);
       });
 
       console.log("ARGS FINAL →", args);
@@ -140,11 +154,66 @@ function App() {
         console.log("devInspect result:", result);
 
         const decoded = decodeReturnValues(result);
-        // cambiarRespuesta(decoded);
-        if (params.funcion === "retornar_todo"){
-          cambiarRespuesta(`El usuario: ${decoded[4]}, que tiene un año de registro del: ${decoded[0]}, tiene un porcentaje de descuento del: ${decoded[3]['raw'][1]}, y una direccion de facturacion: ${decoded[1]}`)
-        }
         
+        // Formatear respuesta según la función
+        let respuestaFormateada = null;
+        
+        if (decoded !== null) {
+          switch (params.funcion) {
+            case "ver_nombre":
+              respuestaFormateada = `📋 Nombre del Concesionario: "${decoded}"`;
+              break;
+              
+            case "aplicar_descuento":
+              respuestaFormateada = `💵 ${decoded}`;
+              break;
+              
+            case "ver_estado_cliente":
+              respuestaFormateada = `📊 ${decoded}`;
+              break;
+              
+            case "retornar_todo": {
+              // Formatear la tupla retornada
+              if (Array.isArray(decoded) && decoded.length >= 5) {
+                const [ano, direccion, servicios, nivel, nombre] = decoded;
+                let nivelTexto = "Desconocido";
+                let descuento = 0;
+                
+                // Decodificar nivel
+                if (nivel && nivel.raw && Array.isArray(nivel.raw)) {
+                  const variant = nivel.raw[0];
+                  descuento = nivel.raw[1] || 0;
+                  const niveles = ["Básico (Cobre)", "Plata", "Oro", "Diamante"];
+                  nivelTexto = niveles[variant] || "Desconocido";
+                }
+                
+                respuestaFormateada = `🔍 Información Completa del Cliente:\n\n` +
+                  `👤 Nombre: ${nombre}\n` +
+                  `📅 Año de Registro: ${ano}\n` +
+                  `📍 Dirección de Facturación: ${direccion}\n` +
+                  `⭐ Nivel: ${nivelTexto} (${descuento}% descuento)\n` +
+                  `🔧 Servicios: ${Array.isArray(servicios) ? servicios.join(", ") || "Ninguno" : servicios || "Ninguno"}`;
+              } else {
+                respuestaFormateada = `🔍 Datos del Cliente:\n${JSON.stringify(decoded, null, 2)}`;
+              }
+              break;
+            }
+              
+            default:
+              // Para otras funciones, mostrar el valor decodificado
+              if (typeof decoded === "string") {
+                respuestaFormateada = decoded;
+              } else if (Array.isArray(decoded)) {
+                respuestaFormateada = `Resultado: ${decoded.map(v => String(v)).join(", ")}`;
+              } else {
+                respuestaFormateada = `✅ Resultado: ${String(decoded)}`;
+              }
+          }
+          
+          cambiarRespuesta(respuestaFormateada);
+        } else {
+          cambiarRespuesta("⚠️ La función no retornó ningún valor");
+        }
 
         return decoded;
       }
@@ -165,17 +234,68 @@ function App() {
 
             console.log("RESULTADO EJECUCIÓN:", result);
 
-            const decoded = decodeReturnValues(result);
-            if (decoded !== null) cambiarRespuesta(decoded);
-
-            // Si se creó una empresa, actualizar ID
-            if (params.funcion === "crear_empresa") {
-              const id = result.effects?.created?.[0]?.reference?.objectId;
-              if (id) {
-                setObjectId(id);
-                window.location.hash = id;
-                setNuevaEmpresa(true);
+            // Formatear mensaje de éxito según la función
+            let mensajeExito = null;
+            
+            switch (params.funcion) {
+              case "crear_empresa": {
+                const id = result.effects?.created?.[0]?.reference?.objectId;
+                if (id) {
+                  setObjectId(id);
+                  window.location.hash = id;
+                  setNuevaEmpresa(true);
+                  setEsOwner(true);
+                  mensajeExito = `✅ ¡Concesionario creado exitosamente!\n\n` +
+                    `🆔 ID del Concesionario: ${id}\n` +
+                    `📋 Este ID ha sido guardado en la URL.`;
+                } else {
+                  mensajeExito = "✅ Concesionario creado exitosamente";
+                }
+                break;
               }
+                
+              case "agregar_cliente":
+                mensajeExito = "✅ Cliente agregado exitosamente al registro";
+                break;
+                
+              case "agregar_servicio":
+                mensajeExito = "✅ Servicio agregado al historial del cliente";
+                break;
+                
+              case "cambiar_nivel_a_cobre":
+                mensajeExito = "✅ Nivel del cliente actualizado a Básico (Cobre) - 5% descuento";
+                break;
+                
+              case "cambiar_nivel_a_plata":
+                mensajeExito = "✅ Nivel del cliente actualizado a Plata - 10% descuento";
+                break;
+                
+              case "cambiar_nivel_a_oro":
+                mensajeExito = "✅ Nivel del cliente actualizado a Oro - 15% descuento";
+                break;
+                
+              case "cambiar_nivel_a_diamante":
+                mensajeExito = "✅ Nivel del cliente actualizado a Diamante - 20% descuento";
+                break;
+                
+              case "eliminar_cliente":
+                mensajeExito = "✅ Cliente eliminado del registro exitosamente";
+                break;
+                
+              default: {
+                // Intentar decodificar si hay valores retornados
+                const decoded = decodeReturnValues(result);
+                if (decoded !== null) {
+                  mensajeExito = `✅ Operación completada exitosamente\n\nResultado: ${String(decoded)}`;
+                } else {
+                  mensajeExito = "✅ Operación completada exitosamente";
+                }
+                break;
+              }
+            }
+            
+            if (mensajeExito) {
+              cambiarRespuesta(mensajeExito);
             }
           },
           onError: (err) => {
@@ -377,13 +497,39 @@ function App() {
       return { raw: bytes };
   }
   
-  return (
+  // Debug: verificar que el video se carga
+  useEffect(() => {
+    console.log("Video importado:", video);
+  }, []);
 
-    <div>
-      <video autoPlay loop playsInline muted className="back-video" >
-        <source src={video} type="video.mp4"/>
+  return (
+    <div style={{ position: "relative", minHeight: "100vh", background: "transparent", overflow: "hidden" }}>
+      <video 
+        autoPlay 
+        loop 
+        playsInline 
+        muted 
+        className="back-video"
+        onLoadedData={() => console.log("Video cargado correctamente")}
+        onError={(e) => console.error("Error cargando video:", e)}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          minWidth: "100%",
+          minHeight: "100%",
+          objectFit: "cover",
+          zIndex: -1,
+          pointerEvents: "none",
+          backgroundColor: "transparent"
+        }}
+      >
+        <source src={video} type="video/mp4" />
+        Tu navegador no soporta la reproducción de videos.
       </video>
-      <div className="app-header">
+      <div className="app-header" style={{ position: "relative", zIndex: 1000 }}>
         <a>
           <img className="logo" src="WayLearn_logo-horizontal_texto-blanco.png" onClick={() => setNuevaEmpresa(false)}/>
         </a>
@@ -393,7 +539,9 @@ function App() {
           <div style={{
             marginTop: "200px",
             textAlign: "center",
-            padding: "0 20px"
+            padding: "0 20px",
+            position: "relative",
+            zIndex: 1
           }}>
             <h1 style={{
               fontSize: "clamp(40px, 8vw, 80px)",
@@ -423,11 +571,13 @@ function App() {
           fontSize: "clamp(18px, 2vw, 24px)",
           color: "rgba(255, 255, 255, 0.95)",
           fontWeight: "500",
-          textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)"
+          textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
+          position: "relative",
+          zIndex: 1
         }}> 
           🔐 Conecta tu wallet para continuar 
         </h3> : (
-        <>
+        <div style={{ position: "relative", zIndex: 1 }}>
           {/* Mensaje de ayuda para problemas de red */}
           <div style={{
             maxWidth: "800px",
@@ -461,12 +611,12 @@ function App() {
           </div>
           {nuevaEmpresa ? (
             (esAdmin || esOwner || !objectId) ? (
-              <AdminDashboard 
-                ClientCall={ClientCall}
-                estado={estado}
-                objectId={objectId}
-                setObjectId={setObjectId}
-                respuesta={respuesta}
+        <AdminDashboard 
+          ClientCall={ClientCall}
+          estado={estado}
+          objectId={objectId}
+          setObjectId={setObjectId}
+          respuesta={respuesta}
                 esAdmin={esAdmin || esOwner}
               />
             ) : (
@@ -503,13 +653,13 @@ function App() {
               </div>
             )
           ) : (
-            <FormInicial 
-              ClientCall={ClientCall}
-              estado={estado}
-              setNuevaEmpresa={setNuevaEmpresa}
-            />
+        <FormInicial 
+          ClientCall={ClientCall}
+          estado={estado}
+          setNuevaEmpresa={setNuevaEmpresa}
+        />
           )}
-        </>
+        </div>
         )}
         
       <div>

@@ -7,9 +7,15 @@ function FormInicial({ ClientCall, estado, setNuevaEmpresa }) {
     const [nombre, cambiarNombre] = useState("")
 
     function enviar() {
+        // Validar que el nombre no esté vacío
+        if (!nombre || nombre.trim() === "") {
+            alert("⚠️ Por favor ingresa un nombre para el concesionario");
+            return;
+        }
+
         ClientCall({
             funcion,
-            args: [nombre]
+            args: [nombre.trim()] // Asegurar que no tenga espacios al inicio/final
         })
     }
     

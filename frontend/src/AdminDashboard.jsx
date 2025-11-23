@@ -29,7 +29,7 @@ export function AdminDashboard({ ClientCall, estado, objectId, setObjectId, resp
                     👑 {objectId ? "Propietario del Concesionario" : "Administrador"}
                 </div>
             )}
-
+            
             {/* 1. HEADER: Input Global para el ID del Concesionario */}
             <div style={{
                 display: "flex",
@@ -101,7 +101,7 @@ export function AdminDashboard({ ClientCall, estado, objectId, setObjectId, resp
                     boxShadow: "0 4px 15px rgba(69, 123, 157, 0.2)"
                 }}>
                     <strong style={{
-                        color: '#1e3c72',
+                        color: '#adc6f3ff',
                         fontSize: "16px",
                         display: "block",
                         marginBottom: "12px"
@@ -111,20 +111,22 @@ export function AdminDashboard({ ClientCall, estado, objectId, setObjectId, resp
                     <pre style={{
                         whiteSpace: "pre-wrap",
                         marginTop: "10px",
-                        color: "#1e3c72",
-                        fontFamily: "monospace",
-                        fontSize: "14px",
-                        background: "rgba(255, 255, 255, 0.7)",
-                        padding: "15px",
+                        color: "#546d9cff",
+                        fontFamily: "system-ui, -apple-system, sans-serif",
+                        fontSize: "15px",
+                        background: "rgba(255, 255, 255, 0.9)",
+                        padding: "20px",
                         borderRadius: "8px",
                         overflow: "auto",
-                        maxHeight: "300px",
-                        lineHeight: "1.6"
+                        maxHeight: "400px",
+                        lineHeight: "1.8",
+                        border: "1px solid rgba(101, 165, 204, 1)",
+                        boxShadow: "0 2px 8px rgba(87, 79, 159, 0.91)"
                     }}>
                         {typeof respuesta === 'string' ? respuesta : JSON.stringify(respuesta, null, 2)}
                     </pre>
                 </div>
-            )}
+                )}
 
 
             {/* 2. GRID DE FUNCIONES: Renderizamos una tarjeta por cada función en la config */}
@@ -153,7 +155,7 @@ function FunctionCard({ config, ClientCall, estado, objectId }) {
     const [valores, setValores] = useState({});
 
     // Función enviar adaptada de tu FormInicial
-        function enviar(e) {
+    function enviar(e) {
         e.preventDefault();
         if (!objectId) {
             alert("⚠️ Primero debes ingresar el ID del concesionario en el campo superior.");

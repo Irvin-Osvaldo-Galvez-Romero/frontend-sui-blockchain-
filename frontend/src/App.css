@@ -3,6 +3,16 @@
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background: transparent !important; /* Sin fondo para que se vea el video */
+  position: relative;
+  z-index: 1;
+}
+
+/* Asegurar que el body también sea transparente */
+body {
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
 }
 
 .video-container {
@@ -18,16 +28,18 @@
 /* Estilos clave para el video de fondo */
 .back-video {
     position: fixed;
-    right: 0;
-    bottom: 0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     min-width: 100%;
     min-height: 100%;
-    width: auto;
-    height: auto;
     z-index: -1;
     object-fit: cover;
-    /* Filtro mejorado para tema automotriz */
-    filter: brightness(40%) contrast(110%) saturate(120%);
+    /* Video sin filtros para que se vea completo */
+    filter: none;
+    /* Asegurar que el video esté detrás de todo */
+    pointer-events: none;
 }
 
 .logo {
